@@ -4,7 +4,7 @@
  *
  * Heads-up (2 giocatori): il bottone è anche small blind, agisce per primo preflop e per ultimo postflop.
  */
-export type Position = 'BTN' | 'SB' | 'BB' | 'UTG' | 'UTG+1' | 'MP' | 'HJ' | 'CO';
+export type Position = 'BTN' | 'SB' | 'BB' | 'UTG' | 'UTG+1' | 'UTG+2' | 'MP' | 'LJ' | 'HJ' | 'CO';
 
 const BY_COUNT: Record<number, Position[]> = {
   2: ['BTN', 'BB'],
@@ -14,10 +14,13 @@ const BY_COUNT: Record<number, Position[]> = {
   6: ['BTN', 'SB', 'BB', 'UTG', 'HJ', 'CO'],
   7: ['BTN', 'SB', 'BB', 'UTG', 'MP', 'HJ', 'CO'],
   8: ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'MP', 'HJ', 'CO'],
+  // 9 e 10 giocatori: solo per le hand history importate (al tavolo del tutor si gioca fino a 8).
+  9: ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'UTG+2', 'MP', 'HJ', 'CO'],
+  10: ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'UTG+2', 'MP', 'LJ', 'HJ', 'CO'],
 };
 
 export const MIN_PLAYERS = 2;
-export const MAX_PLAYERS = 8;
+export const MAX_PLAYERS = 10;
 
 export function positionNames(numPlayers: number): Position[] {
   const p = BY_COUNT[numPlayers];
@@ -53,6 +56,8 @@ export const POSITION_LABELS_IT: Record<Position, string> = {
   BB: 'Big blind (BB)',
   UTG: 'Under the gun (UTG)',
   'UTG+1': 'UTG+1',
+  'UTG+2': 'UTG+2',
+  LJ: 'Lojack (LJ)',
   MP: 'Middle position (MP)',
   HJ: 'Hijack (HJ)',
   CO: 'Cutoff (CO)',

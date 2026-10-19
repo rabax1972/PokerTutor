@@ -40,6 +40,20 @@ export interface HandConfig {
   presetHoles?: (Card[] | undefined)[];
   /** Board preimpostato (anche parziale): le carte mancanti vengono pescate dal mazzo. */
   presetBoard?: Card[];
+  /** Ante per posto (fiches morte postate prima dei blind), es. dalle hand history dei tornei. */
+  antes?: number[];
+  /**
+   * Puntate forzate extra (hand history importate): `live` = conta come puntata nella street
+   * (es. un giocatore appena seduto che posta il BB), altrimenti è dead money (es. SB morto).
+   */
+  extraPosts?: { seat: number; amount: number; live: boolean }[];
+}
+
+export type ForcedPostType = 'post-sb' | 'post-bb' | 'post-ante' | 'post-dead';
+
+/** True per blind, ante e altre puntate forzate (non sono decisioni dei giocatori). */
+export function isForcedPost(a: { type: string }): boolean {
+  return a.type === 'post-sb' || a.type === 'post-bb' || a.type === 'post-ante' || a.type === 'post-dead';
 }
 
 export interface PlayerState {
@@ -66,7 +80,7 @@ export interface PlayerState {
 export interface ActionRecord {
   seat: number;
   street: Street;
-  type: ActionType | 'post-sb' | 'post-bb';
+  type: ActionType | ForcedPostType;
   /** Totale puntato dal giocatore nella street dopo l'azione. */
   amount: number;
   /** Fiches aggiunte con questa azione. */
@@ -187,22 +201,24 @@ export function createHand(config: HandConfig): GameState {
     seed,
   };
 
+  config.antes?.forEach((a, seat) => a > 0 && postBlind(s, seat, a, 'post-ante', false));
   postBlind(s, sb, config.smallBlind, 'post-sb');
   postBlind(s, bb, config.bigBlind, 'post-bb');
+  for (const x of config.extraPosts ?? []) postBlind(s, x.seat, x.amount, x.live ? 'post-bb' : 'post-dead', x.live);
   // Anche se il BB è corto, per restare in mano bisogna pareggiare il big blind intero.
-  s.currentBet = config.bigBlind;
+  s.currentBet = Math.max(config.bigBlind, ...s.players.map((p) => p.streetBet));
   s.toAct = findNextToAct(s, firstToActPreflop(config.buttonSeat, n), true);
   progress(s);
   return s;
 }
 
-function postBlind(s: GameState, seat: number, amount: number, type: 'post-sb' | 'post-bb') {
+function postBlind(s: GameState, seat: number, amount: number, type: ForcedPostType, live = true) {
   const p = s.players[seat];
   const potBefore = potTotal(s);
   const put = Math.min(amount, p.stack);
   const stackBefore = p.stack;
   p.stack -= put;
-  p.streetBet += put;
+  if (live) p.streetBet += put;
   p.committed += put;
   if (p.stack === 0) p.allIn = true;
   s.log.push({
@@ -392,5 +408,5 @@ function finish(s: GameState, showdown: boolean) {
 
 /** Utilità: azioni volontarie (escluse le blind) di una street. */
 export function streetActions(s: GameState, street: Street): ActionRecord[] {
-  return s.log.filter((a) => a.street === street && a.type !== 'post-sb' && a.type !== 'post-bb');
+  return s.log.filter((a) => a.street === street && !isForcedPost(a));
 }
