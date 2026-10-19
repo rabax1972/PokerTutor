@@ -13,6 +13,17 @@ npm run build      # build di produzione in dist/
 
 Non serve un backend: storico e statistiche sono salvati nel `localStorage` del browser.
 
+## Pubblicazione
+
+L'app è statica (HTML + JS + CSS): non serve un server applicativo.
+
+```bash
+npm run build      # genera dist/ per www.giacomorabaglia.com/pokertutor/
+npm run preview    # anteprima locale su http://localhost:4173/pokertutor/
+```
+
+Copia il **contenuto** di `dist/` nella cartella `pokertutor/` del sito, compreso il file nascosto `.htaccess`. Su Apache gestisce la cache: `index.html` sempre aggiornato, asset in cache a lungo. Per un altro percorso: `BASE_PATH=/altro/ npm run build`.
+
 ## Modalità
 
 - **Mano libera**: mani casuali contro bot di stili diversi (tight, loose, aggressivo, passivo, regolare). Il bottone ruota a ogni mano.
